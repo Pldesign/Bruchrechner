@@ -49,7 +49,7 @@ import javax.swing.UIManager;
 public class Bruchrechner extends JFrame {
 
 	/**
-	 * Kommentar
+	 * 
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
