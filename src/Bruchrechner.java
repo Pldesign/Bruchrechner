@@ -13,6 +13,8 @@ import javax.swing.JScrollBar;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.ItemListener;
@@ -41,10 +43,30 @@ import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.border.TitledBorder;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.plaf.FileChooserUI;
 import javax.swing.border.SoftBevelBorder;
 import javax.swing.border.MatteBorder;
 import java.awt.Color;
 import javax.swing.UIManager;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
+import javax.swing.JRadioButton;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
 
 public class Bruchrechner extends JFrame {
 
@@ -100,10 +122,22 @@ public class Bruchrechner extends JFrame {
 	private JMenuItem menuRechenschritte;
 	private JMenuItem menuErgebnisliste;
 	private JSlider nk;
+	private JComboBox ra;
 	private JLabel lblAnzahlNk;
 	private JPanel panel_3;
 	private JLabel lblLetzteRechnungen;
 	private JPanel panel_4;
+	private JMenu mnFile;
+	private JMenuItem mntmVerlaufSichern;
+	private JMenuItem mntmRechnungenSichern;
+	private JMenuItem mntmVerlaufLesen;
+	private JMenuItem mntmRechnungenLesen;
+	final JFileChooser fc = new JFileChooser();
+	private JMenuItem mntmAlleRechnungenAusfhren;
+	private JCheckBox rz;
+
+	private String delkom = "[K]"; // Kommentar in der Eingabe
+	private String delra = "[R]"; // Rundungsformat in der Eingabe
 
 	/**
 	 * Launch the application.
@@ -129,8 +163,111 @@ public class Bruchrechner extends JFrame {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 800, 500);
 
+		FileFilter filter = new FileNameExtensionFilter("Text", "txt");
+		fc.setFileFilter(filter);
+
 		menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
+
+		mnFile = new JMenu("Datei");
+		menuBar.add(mnFile);
+
+		mntmVerlaufLesen = new JMenuItem("Verlauf lesen");
+		mntmVerlaufLesen.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				fc.setSelectedFile(new File("verlauf.txt"));
+				int returnVal = fc.showOpenDialog(null);
+				if (returnVal == JFileChooser.APPROVE_OPTION) {
+					List<String> lines = Collections.emptyList();
+					try {
+						erglist = "";
+
+						lines = Files.readAllLines(Paths.get(fc.getSelectedFile().getPath()), StandardCharsets.UTF_8);
+						erglist = "";
+						for (String str : lines) {
+							erglist += str + "\n";
+						}
+
+						erg.setText(erglist);
+
+					} catch (IOException e2) {
+						// TODO Auto-generated catch block
+						e2.printStackTrace();
+					}
+				}
+			}
+		});
+		mnFile.add(mntmVerlaufLesen);
+
+		mntmVerlaufSichern = new JMenuItem("Verlauf sichern");
+		mntmVerlaufSichern.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				fc.setSelectedFile(new File("verlauf.txt"));
+				int returnVal = fc.showSaveDialog(null);
+
+				if (returnVal == JFileChooser.APPROVE_OPTION) {
+					erg.setText(erglist);
+					try {
+						erg.write(new OutputStreamWriter(new FileOutputStream(fc.getSelectedFile()), "utf-8"));
+					} catch (IOException e2) {
+						// TODO Auto-generated catch block
+						e2.printStackTrace();
+					}
+				}
+			}
+		});
+		mnFile.add(mntmVerlaufSichern);
+
+		mntmRechnungenLesen = new JMenuItem("Rechnungen lesen");
+		mntmRechnungenLesen.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) {
+				fc.setSelectedFile(new File("rechnungen.txt"));
+				int returnVal = fc.showOpenDialog(null);
+
+				if (returnVal == JFileChooser.APPROVE_OPTION) {
+					comboBox.removeAllItems();
+					List<String> lines = Collections.emptyList();
+					try {
+						lines = Files.readAllLines(Paths.get(fc.getSelectedFile().getPath()), StandardCharsets.UTF_8);
+						comboBox.removeAllItems();
+						for (String str : lines) {
+							comboBox.addItem(str);
+						}
+
+					} catch (IOException e2) {
+						// TODO Auto-generated catch block
+						e2.printStackTrace();
+					}
+				}
+
+			}
+
+		});
+		mnFile.add(mntmRechnungenLesen);
+
+		mntmRechnungenSichern = new JMenuItem("Rechnungen sichern");
+		mntmRechnungenSichern.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+
+				fc.setSelectedFile(new File("rechnungen.txt"));
+				int returnVal = fc.showSaveDialog(null);
+
+				if (returnVal == JFileChooser.APPROVE_OPTION) {
+					erg.setText("");
+					for (int i = 0; i < comboBox.getItemCount(); i++)
+						erg.append(comboBox.getItemAt(i) + "\n");
+					try {
+						erg.write(new OutputStreamWriter(new FileOutputStream(fc.getSelectedFile()), "utf-8"));
+					} catch (IOException e2) {
+						// TODO Auto-generated catch block
+						e2.printStackTrace();
+					}
+				}
+
+			}
+		});
+		mnFile.add(mntmRechnungenSichern);
 
 		mnOptions = new JMenu("Optionen");
 		menuBar.add(mnOptions);
@@ -143,6 +280,18 @@ public class Bruchrechner extends JFrame {
 				comboBox.removeAllItems();
 			}
 		});
+
+		mntmAlleRechnungenAusfhren = new JMenuItem("alle Rechnungen ausf\u00FChren");
+		mntmAlleRechnungenAusfhren.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+
+				for (int i = 0; i < comboBox.getItemCount(); i++) {
+					text.setText(comboBox.getItemAt(i));
+					berechnen();
+				}
+			}
+		});
+		mnOptions.add(mntmAlleRechnungenAusfhren);
 		mnOptions.add(menuListe);
 
 		menuTastatur = new JMenuItem("Tastatur ausblenden");
@@ -217,7 +366,7 @@ public class Bruchrechner extends JFrame {
 				new TitledBorder(null, "Ausgabe", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 		contentPane.add(scrollPane, BorderLayout.CENTER);
 		erg = new JTextArea();
-		erg.setToolTipText("Rechenliste\r\n\r\nEinzelschritte k\u00F6nnen ausgeblendet werden");
+		erg.setToolTipText("");
 		erg.setEditable(false);
 		erg.setFont(new Font("Tahoma", Font.PLAIN, 15));
 		scrollPane.setViewportView(erg);
@@ -268,7 +417,7 @@ public class Bruchrechner extends JFrame {
 			}
 		});
 		panel_1.add(button_3);
-		
+
 		button_27 = new JButton("\\");
 		button_27.setFont(new Font("Tahoma", Font.BOLD, 15));
 		button_27.setToolTipText("Kommentar hinzügen");
@@ -479,17 +628,17 @@ public class Bruchrechner extends JFrame {
 		panel_4 = new JPanel();
 		panel.add(panel_4, BorderLayout.EAST);
 		panel_4.setLayout(new GridLayout(0, 1, 0, 0));
-		
-				button_4 = new JButton("AC");
-				panel_4.add(button_4);
-				button_4.setFont(new Font("Tahoma", Font.BOLD, 15));
-				button_4.setToolTipText("Eingabe l\u00F6schen");
-				button_4.addActionListener(new ActionListener() {
-					public void actionPerformed(ActionEvent e) {
-						text.setText("");
-						text.requestFocus();
-					}
-				});
+
+		button_4 = new JButton("AC");
+		panel_4.add(button_4);
+		button_4.setFont(new Font("Tahoma", Font.BOLD, 15));
+		button_4.setToolTipText("Eingabe l\u00F6schen");
+		button_4.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				text.setText("");
+				text.requestFocus();
+			}
+		});
 
 		button_24 = new JButton("ANS");
 		button_24.setFont(new Font("Tahoma", Font.BOLD, 15));
@@ -517,10 +666,10 @@ public class Bruchrechner extends JFrame {
 		panel_3 = new JPanel();
 		contentPane.add(panel_3, BorderLayout.SOUTH);
 
-		lblLetzteRechnungen = new JLabel("Letzte Rechnungen: ");
+		lblLetzteRechnungen = new JLabel("Rechnungen: ");
 		lblLetzteRechnungen.setFont(new Font("Tahoma", Font.PLAIN, 15));
 
-		lblAnzahlNk = new JLabel("Ausgabe auf geltende Ziffern runden (0 = exakte Bruchrechnung)");
+		lblAnzahlNk = new JLabel("Ausgabe :");
 		lblAnzahlNk.setFont(new Font("Tahoma", Font.PLAIN, 15));
 		lblAnzahlNk.setHorizontalAlignment(SwingConstants.CENTER);
 
@@ -533,46 +682,74 @@ public class Bruchrechner extends JFrame {
 
 			}
 		});
-		comboBox.setModel(new DefaultComboBoxModel<String>(new String[] { "1_1|2   \\(Bruchformat Ganze_Z\u00E4hler|Nenner)",
-				".5E-15   \\(Dezimalbr\u00FCche kann man mit 10erPotenzen angegeben) ",
-				"2(2+3)(5-3)6  \\ (Malpunkte kann man bei Klammern weglassen)",
-				"2^(-1/2)     \\(rationale Exponenten sind nur bei Dezimalbr\u00FCchen erlaubt)" }));
+		comboBox.setModel(new DefaultComboBoxModel(new String[] {"2_8|6     K Bruchdarstellung (RB)", "13_2|3     RG3 K Runden auf 3 geltende Ziffern", "13_2|3     RN3 K Runden auf 3 Nachkommastellen", ".5E-15     RG4 K Dezimalbr\u00FCche mit 10er Potenzen", "2(2+3)(5-3)6     RB K Malpunkte kann man bei Klammern weglassen", "2^(1/2)     RN3 K bei rationale Exponenten muss man runden"}));
+
+		JLabel lblAnzahlStellen = new JLabel("Anzahl Stellen");
+		lblAnzahlStellen.setFont(new Font("Tahoma", Font.PLAIN, 15));
+
+		ra = new JComboBox();
+		ra.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (ra.getSelectedIndex() == 0)
+					nk.setValue(0);
+			}
+		});
+
+		ra.setFont(new Font("Tahoma", Font.PLAIN, 15));
+		ra.setModel(
+				new DefaultComboBoxModel(new String[] {"Bruchdarstellung (RB)", "Nachkommastellen (RNn)", "geltende Ziffern (RGn)"}));
 
 		nk = new JSlider();
 		nk.setMinorTickSpacing(1);
 		nk.setMajorTickSpacing(5);
 		nk.setSnapToTicks(true);
 		nk.setValue(0);
-		nk.setToolTipText("Anzahl Nachkommastellen:\r\n0 bedeutet exakter Bruchrechner");
+		nk.setToolTipText("Bei Bruchdarstellung ist die Anzahl Null");
 		nk.setPaintTicks(true);
 		nk.setPaintLabels(true);
 		nk.setMaximum(10);
+
+		rz = new JCheckBox("Rundung  \u00FCberschreiben");
+		rz.setToolTipText("Kommentare werden gel\u00F6scht!");
+		rz.setFont(new Font("Tahoma", Font.PLAIN, 15));
+
 		GroupLayout gl_panel_3 = new GroupLayout(panel_3);
 		gl_panel_3.setHorizontalGroup(
 			gl_panel_3.createParallelGroup(Alignment.LEADING)
 				.addGroup(gl_panel_3.createSequentialGroup()
+					.addContainerGap()
+					.addComponent(lblAnzahlNk)
+					.addPreferredGap(ComponentPlacement.UNRELATED)
+					.addComponent(ra, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+					.addPreferredGap(ComponentPlacement.RELATED)
+					.addComponent(lblAnzahlStellen)
+					.addPreferredGap(ComponentPlacement.RELATED)
+					.addComponent(nk, GroupLayout.PREFERRED_SIZE, 184, GroupLayout.PREFERRED_SIZE)
+					.addPreferredGap(ComponentPlacement.RELATED)
+					.addComponent(rz)
+					.addGap(37))
+				.addGroup(gl_panel_3.createSequentialGroup()
 					.addGap(5)
-					.addGroup(gl_panel_3.createParallelGroup(Alignment.LEADING, false)
-						.addGroup(gl_panel_3.createSequentialGroup()
-							.addComponent(lblAnzahlNk)
-							.addPreferredGap(ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-							.addComponent(nk, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-						.addGroup(gl_panel_3.createSequentialGroup()
-							.addComponent(lblLetzteRechnungen)
-							.addGap(18)
-							.addComponent(comboBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
-					.addGap(350))
+					.addComponent(lblLetzteRechnungen)
+					.addPreferredGap(ComponentPlacement.RELATED, 13, Short.MAX_VALUE)
+					.addComponent(comboBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+					.addGap(478))
 		);
 		gl_panel_3.setVerticalGroup(
 			gl_panel_3.createParallelGroup(Alignment.LEADING)
 				.addGroup(gl_panel_3.createSequentialGroup()
-					.addGroup(gl_panel_3.createParallelGroup(Alignment.LEADING)
+					.addGap(11)
+					.addGroup(gl_panel_3.createParallelGroup(Alignment.TRAILING)
 						.addGroup(gl_panel_3.createSequentialGroup()
-							.addGap(18)
-							.addComponent(lblAnzahlNk))
-						.addGroup(gl_panel_3.createSequentialGroup()
-							.addContainerGap()
-							.addComponent(nk, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
+							.addGroup(gl_panel_3.createParallelGroup(Alignment.LEADING)
+								.addComponent(lblAnzahlNk)
+								.addGroup(gl_panel_3.createParallelGroup(Alignment.BASELINE)
+									.addComponent(ra, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+									.addComponent(lblAnzahlStellen)))
+							.addGap(19))
+						.addGroup(gl_panel_3.createParallelGroup(Alignment.LEADING)
+							.addComponent(rz, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+							.addComponent(nk, Alignment.TRAILING, GroupLayout.PREFERRED_SIZE, 52, GroupLayout.PREFERRED_SIZE)))
 					.addPreferredGap(ComponentPlacement.RELATED)
 					.addGroup(gl_panel_3.createParallelGroup(Alignment.BASELINE)
 						.addComponent(lblLetzteRechnungen)
@@ -609,7 +786,6 @@ public class Bruchrechner extends JFrame {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-
 			}
 			break;
 		default:
@@ -619,65 +795,92 @@ public class Bruchrechner extends JFrame {
 	}
 
 	private void berechnen() {
-		erg.setText("");
-		erg.append("Rechnung: \n");
-		erg.append(text.getText() + "\n");
-		
-		try {
-			Rechner rechner = new Rechner(text.getText(), nk.getValue());
-			lerg = rechner.getErgebnis();
-			erg.append("= " + lerg + "\n\n");
-			String[][] rl = rechner.getRl();
-			int[][] al = rechner.getAl();
 
-			if (rechenschritte && al.length > 0) {
-				erg.append("Rechenschritte:\n");
-				
+		String bstr = text.getText();
+		if (!bstr.equals("")) {
+			erg.setText("");
+			String rech = "";
 
-				for (int vi = 0; vi < al.length && al.length > 0; vi++) {
-					erg.append(vi + 1 + ". ");
-					if (rl[al[vi][1]][1].substring(0, 1).equals("-")) {
-						erg.append("(" + rl[al[vi][1]][1] + ") ");
-					} else {
-						erg.append(" " + rl[al[vi][1]][1]);
+			String[] textkom = bstr.split(delkom);
+			String[] textra = textkom[0].split(delra);
+			
+
+			if (rz.isSelected() || textra.length == 1) {
+
+				switch (ra.getSelectedIndex()) {
+				case 0:
+					rech = "RB";
+					break;
+				case 1:
+					rech = "RN" + nk.getValue();
+					break;
+				case 2:
+					rech = "RG" + nk.getValue();
+					break;
+				}
+				bstr = textra[0].trim() + "     " + rech;
+
+			}
+
+			erg.append("Rechnung: \n");
+			erg.append(bstr + "\n");
+			try {
+				Rechner rechner = new Rechner(bstr);
+				lerg = rechner.getErgebnis();
+				erg.append("= " + lerg + "\n\n");
+				String[][] rl = rechner.getRl();
+				int[][] al = rechner.getAl();
+
+				if (rechenschritte && al.length > 0) {
+					erg.append("Rechenschritte:\n");
+
+					for (int vi = 0; vi < al.length && al.length > 0; vi++) {
+						erg.append(vi + 1 + ". ");
+						if (rl[al[vi][1]][1].substring(0, 1).equals("-")) {
+							erg.append("(" + rl[al[vi][1]][1] + ") ");
+						} else {
+							erg.append(" " + rl[al[vi][1]][1]);
+						}
+
+						erg.append(" " + rl[al[vi][0]][0] + " ");
+
+						if (rl[al[vi][2]][1].substring(0, 1).equals("-")) {
+							erg.append(" (" + rl[al[vi][2]][1] + ")");
+
+						} else {
+							erg.append(" " + rl[al[vi][2]][1]);
+						}
+
+						erg.append(" = " + rl[al[vi][0]][1] + "\n");
 					}
 
-					erg.append(" " + rl[al[vi][0]][0] + " ");
+				}
 
-					if (rl[al[vi][2]][1].substring(0, 1).equals("-")) {
-						erg.append(" (" + rl[al[vi][2]][1] + ")");
+				boolean item = true;
+				for (int i = 0; i < comboBox.getItemCount(); i++) {
 
-					} else {
-						erg.append(" " + rl[al[vi][2]][1]);
+					if (bstr.equals(comboBox.getItemAt(i))) {
+						item = false;
 					}
-
-					erg.append(" = " + rl[al[vi][0]][1] + "\n");
+				}
+				if (item) {
+					comboBox.addItem(bstr);
+					comboBox.setSelectedIndex(comboBox.getItemCount() - 1);
 				}
 
-			}
+				text.setText("");
 
-			boolean item = true;
-			for (int i = 0; i < comboBox.getItemCount(); i++) {
-
-				if (text.getText().equals(comboBox.getItemAt(i))) {
-					item = false;
+			} catch (Exception e1) {
+				String[] ftxt = e1.getMessage().split("\\:");
+				erg.append(e1.getMessage() + "\n\n");
+				if (ftxt[0].equals("Syntax-Fehler Pos")) {
+					text.setCaretPosition(Integer.parseInt(ftxt[1]));
 				}
 			}
-			if (item) {
-				comboBox.addItem(text.getText());
-				comboBox.setSelectedIndex(comboBox.getItemCount() - 1);
-			}
-			text.setText("");
-		} catch (Exception e1) {
-			String[] ftxt = e1.getMessage().split("\\:");
-			erg.append(e1.getMessage() + "\n\n");
-			if (ftxt[0].equals("Syntax-Fehler Pos")) {
-				text.setCaretPosition(Integer.parseInt(ftxt[1]));
-			}
+
+			erglist += erg.getText();
+			erglist += "________________________\n";
+			text.requestFocus();
 		}
-
-		erglist += erg.getText();
-		erglist += "________________________\n";
-		text.requestFocus();
 	}
 }

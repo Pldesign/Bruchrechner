@@ -1,5 +1,4 @@
 
-
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
@@ -21,16 +20,18 @@ public class Rechner {
 	private double d2 = 0;
 	private String bruchpat = "(\\d*[\\_]?\\d+[\\|]?\\d+)|(\\d*[\\.]?\\d+)|(\\d*[\\.]?\\d+E[\\-\\+]?\\d{1,3})";
 	private String rzpat = "[\\(\\)\\+\\-\\*\\/\\^\\s]";
+	private String delrech = "[R]";
 	private String delb1 = "[\\_]";
 	private String delb2 = "[\\|]";
 	private String deld1 = "[\\.]";
 	private String deld2 = "[E]";
 	private String ch = "";
 	private String brtxt = "";
-	int bvi = 0;
-	int bni = 0;
-	int ver = 1;
-	int nk = 0;
+	private int bvi = 0;
+	private int bni = 0;
+	private int ver = 1;
+	private int nk = 0;
+	private String ra = "B";
 
 	private String[][] rl;
 	private int[][] vl;
@@ -41,19 +42,48 @@ public class Rechner {
 	private String str = "";
 	private String ergebnis = "";
 
-	public Rechner(String bstring, int n) {
-		setRechner(bstring, n);
+	public Rechner(String bstring) {
+		setRechner(bstring);
 	}
 
-	public void setRechner(String bstring, int n) {
-		nk = n;
-		str = bstring;
+	public void setRechner(String bstring) {
+		nk = 0;
+		ra = "B";
+
+		String rech[] = bstring.split(delrech);
+		if (rech.length < 1) {
+			ra = "B";
+			nk = 0;
+		} else {
+
+			switch (rech[1].substring(0, 1)) {
+			case "B":
+				ra = "B";
+				nk = 0;
+				break;
+			case "G":
+			case "N":
+				ra = rech[1].substring(0, 1);
+				nk = 0;
+				int in = 2;
+				while (in <= rech[1].length()) {
+					if (rech[1].substring(1, in).matches("\\d+")) {
+						nk = Integer.parseInt(rech[1].substring(1, in));
+					}
+					in++;
+				}
+				break;
+			default:
+				throw new ArithmeticException("Kein gültiges Ausgabeformat!");
+			}
+		}
+		str = rech[0];
 		ergebnis = "";
 		zerlegeString();
 		rechneRl();
 		if (ali == 0) {
 			al = new int[0][3];
-			
+
 		}
 	}
 
@@ -67,10 +97,14 @@ public class Rechner {
 				ergebnis = ze / ne + "_" + Math.abs(ze) % ne + "|" + ne;
 			}
 		} else {
-			
+
 			BigDecimal bdec = new BigDecimal(de);
-			ergebnis = bdec.round(new MathContext(nk, RoundingMode.HALF_UP)) + "";
-			
+			if (ra.equals("G")) {
+				ergebnis = bdec.round(new MathContext(nk, RoundingMode.HALF_UP)) + "";
+			} else {
+				ergebnis = bdec.setScale(nk, BigDecimal.ROUND_HALF_UP) + "";
+			}
+
 		}
 
 		return ergebnis;
@@ -110,7 +144,7 @@ public class Rechner {
 						ch = " ";
 					}
 				} else {
-					brtxt ="";
+					brtxt = "";
 					while (si < (str.length() - i) && ch != "N") {
 						if (str.substring(i, str.length() - si).matches(bruchpat)) {
 							ch = "N";
@@ -118,9 +152,8 @@ public class Rechner {
 						}
 						si++;
 					}
-					if (ch !="N"){
-						throw new ArithmeticException(
-						"Syntax-Fehler Pos:" + i + ": Falsches Zahlenformat!");
+					if (ch != "N") {
+						throw new ArithmeticException("Syntax-Fehler Pos:" + i + ": Falsches Zahlenformat!");
 					}
 				}
 
@@ -463,12 +496,12 @@ public class Rechner {
 				de = (double) ze / (double) ne;
 				if (d2bruch.length > 1) {
 					if (nk > 0) {
-						if (Math.abs(Double.parseDouble(d2bruch[1]))>300) {
+						if (Math.abs(Double.parseDouble(d2bruch[1])) > 300) {
 							throw new ArithmeticException("Exponent zu groß: " + d2bruch[1]);
 						}
 						de = (double) ze / (double) ne * Math.pow(10, Double.parseDouble(d2bruch[1]));
 					} else {
-						if (Math.abs(Double.parseDouble(d2bruch[1]))>30) {
+						if (Math.abs(Double.parseDouble(d2bruch[1])) > 30) {
 							throw new ArithmeticException("Exponent für Brüche zu groß: " + d2bruch[1]);
 						}
 						if (d2bruch[1].substring(0, 1).equals("-")) {
