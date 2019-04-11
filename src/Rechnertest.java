@@ -4,10 +4,10 @@ public class Rechnertest {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		String[] str = new String[] { " 2++3","2^1|2","((-2(-3)^3*2.5", "2 / 1_1|3", 
+		String[] str = new String[] { " 2++3","2^1|2 RB" ,"((-2(-3)^3*2.5 RN3", "2 / 1_1|3 RG3", 
 
-				"(2-5) (4+1)", "2+3(4)", "(-1_1|2)^(-4)", "-2^(-3)", "-2+3", "2*(3+4)^3", "-1_1|2 + .4" };
-		Rechner rechner = new Rechner("0",0);
+				"(2-5) (4+1)  RB", "2+3(4) RB", "(-1_1|2)^(-4) RG3", "-2^(-3)RB", "-2+3RB", "2*(3+4)^3RB", "-1_1|2 + .4RB" };
+		Rechner rechner = new Rechner("0");
 
 		for (int i = 0; i < str.length; i++) {
 
@@ -16,7 +16,7 @@ public class Rechnertest {
 			System.out.println("Eingabe:   " + str[i]);
 
 			try {
-				rechner.setRechner(str[i],0);
+				rechner.setRechner(str[i]);
 				String[][] rl = rechner.getRl();
 				int[][] al = rechner.getAl();
 				System.out.print("Rechnung: ");
