@@ -248,6 +248,8 @@ public class Zahl {
 				ze.zaehler = Math.multiplyExact(ze.zaehler, z);
 				ze.nenner = Math.multiplyExact(ze.nenner, n);
 			}
+			ze.kuerzeBruch();
+			ze.decim = (double) ze.zaehler / (double) ze.nenner;
 		} else {
 			ze.decim = Math.pow(z1.decim, z2.decim);
 		}
