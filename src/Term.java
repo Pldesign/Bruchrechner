@@ -65,6 +65,9 @@ public class Term {
 	public TermA[] getAusgabeliste() {
 		return al;
 	}
+	public String[] getRl() {
+		return rl;
+	}
 
 	public TreeMap<String, Term> getVarmap() {
 		return varaus;
@@ -520,10 +523,9 @@ public class Term {
 						}
 
 					}
-					vl[i][0] = 0;
-					vl[i + bni][1] = ei - 1;
-					vl[i + bni][0] = 1;
-					zl[i + bni] = zl[i];
+					vl[i][0] = 1;
+					vl[i][1] = ei - 1;
+					vl[i + bni][0] = 0;
 					vl[i - bvi][0] = 0;
 
 				}

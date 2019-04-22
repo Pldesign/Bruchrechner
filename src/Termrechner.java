@@ -13,6 +13,7 @@ import javax.swing.DefaultComboBoxModel;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -40,6 +41,8 @@ import javax.swing.UIManager;
 import javax.swing.JSplitPane;
 import javax.swing.JMenuBar;
 import java.awt.GridLayout;
+
+import javax.imageio.ImageIO;
 import javax.swing.BoxLayout;
 import java.awt.FlowLayout;
 import javax.swing.event.ChangeListener;
@@ -48,10 +51,14 @@ import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.border.SoftBevelBorder;
 import javax.swing.border.BevelBorder;
+import javax.swing.ScrollPaneConstants;
+import java.awt.Dimension;
 
 public class Termrechner extends JFrame {
 
@@ -78,11 +85,11 @@ public class Termrechner extends JFrame {
 	private JPanel panel;
 	private JScrollPane scrollPane_1;
 	public JPanel tastatur;
+	public JPanel baum;
 
 	private JSlider nk;
 	private JComboBox<String> ra;
 	private String art;
-	private JLabel lblAnzahlNk;
 	private JPanel panel_3;
 	private JLabel lblLetzteRechnungen;
 	private JLabel lblverlauf;
@@ -111,6 +118,11 @@ public class Termrechner extends JFrame {
 	private JPanel panel_4;
 	private JButton btnNewButton;
 	private JCheckBox chckbxVariablenbernehmen;
+	private JSplitPane splitPane;
+	private JScrollPane scrollPane_3;
+	private JMenuItem mntmSchriftart;
+	private JMenuItem mntmRechenschritteAusblenden;
+	private JMenuItem mntmRechenbaumSichern;
 
 	/**
 	 * Launch the application.
@@ -243,7 +255,8 @@ public class Termrechner extends JFrame {
 			}
 		});
 		mnFile.add(mntmRechnungenSichern);
-
+		
+	
 		mnOptions = new JMenu("Optionen");
 		menuBar.add(mnOptions);
 
@@ -293,7 +306,37 @@ public class Termrechner extends JFrame {
 			}
 		});
 		mnOptions.add(menuErgebnisliste);
+		
+		mntmRechenschritteAusblenden = new JMenuItem("Rechenschritte ausblenden");
+		mntmRechenschritteAusblenden.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (rechenschritte) {
+					menuTastatur.setText("Rechenschritte einblenden");
+					rechenschritte = false;
+				} else {
+					menuTastatur.setText("Rechenschritte ausblenden");
+					rechenschritte = true;
+				}
+				rund();
+			}
+		});
+		mnOptions.add(mntmRechenschritteAusblenden);
 		mnOptions.add(menuTastatur);
+		
+		mntmSchriftart = new JMenuItem("Schriftart");
+		mntmSchriftart.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				JFontChooser font = new JFontChooser();
+				font.setSelectedFont(new Font("Tahoma", Font.PLAIN, 15));
+				font.showDialog(erg);
+				erg.setFont(font.getSelectedFont());
+				text.setFont(font.getSelectedFont());
+				var.setFont(font.getSelectedFont());
+				baum.setFont(font.getSelectedFont());
+				repaint();
+			}
+		});
+		mnOptions.add(mntmSchriftart);
 
 		contentPane = new JPanel();
 
@@ -368,20 +411,40 @@ public class Termrechner extends JFrame {
 		panel_3.add(verlauf);
 
 		splitPane_1 = new JSplitPane();
+		splitPane_1.setOneTouchExpandable(true);
 		contentPane.add(splitPane_1, BorderLayout.CENTER);
 
 		panel_2 = new JPanel();
 		splitPane_1.setRightComponent(panel_2);
 		panel_2.setLayout(new BoxLayout(panel_2, BoxLayout.X_AXIS));
-
-		scrollPane = new JScrollPane();
-		panel_2.add(scrollPane);
-		scrollPane.setViewportBorder(
-				new TitledBorder(null, "Ausgabe", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		erg = new JTextArea();
-		erg.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		erg.setEditable(false);
-		scrollPane.setViewportView(erg);
+		
+		splitPane = new JSplitPane();
+		splitPane.setResizeWeight(0.3);
+		splitPane.setOneTouchExpandable(true);
+		splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
+		panel_2.add(splitPane);
+		
+				scrollPane = new JScrollPane();
+				scrollPane.setPreferredSize(new Dimension(2, 200));
+				splitPane.setLeftComponent(scrollPane);
+				scrollPane.setViewportBorder(
+						new TitledBorder(null, "Ausgabe", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+				erg = new JTextArea();
+				erg.setFont(new Font("Tahoma", Font.PLAIN, 14));
+				erg.setEditable(false);
+				scrollPane.setViewportView(erg);
+				erg.setText("");
+				
+				scrollPane_3 = new JScrollPane();
+				scrollPane_3.setViewportBorder(new TitledBorder(null, "Rechenbaum", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+				
+				splitPane.setRightComponent(scrollPane_3);
+				
+				
+				baum = new Baum (this);
+				
+				scrollPane_3.setViewportView(baum);
+				
 
 		panel_4 = new JPanel();
 		splitPane_1.setLeftComponent(panel_4);
@@ -393,17 +456,15 @@ public class Termrechner extends JFrame {
 				new TitledBorder(null, "Variablen", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
 		var = new JTextArea();
+		var.setRows(10);
 		var.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		var.setEditable(false);
 		scrollPane_2.setViewportView(var);
 
 		panel_1 = new JPanel();
+		panel_1.setBorder(new TitledBorder(null, "Ausgabe runden", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 		panel_4.add(panel_1, BorderLayout.SOUTH);
-		panel_1.setLayout(new GridLayout(4, 1, 0, 0));
-
-		lblAnzahlNk = new JLabel("Ausgabe runden:");
-		panel_1.add(lblAnzahlNk);
-		lblAnzahlNk.setHorizontalAlignment(SwingConstants.CENTER);
+		panel_1.setLayout(new GridLayout(3, 1, 0, 0));
 
 		ra = new JComboBox<String>();
 		panel_1.add(ra);
@@ -443,10 +504,11 @@ public class Termrechner extends JFrame {
 
 		alleRechnungen();
 		erglist = "";
-		erg.setText("");
 		varmap.clear();
 		var.setText("");
+		erg.setText("");
 		verlauf.removeAllItems();
+		term = null;
 
 	}
 
@@ -470,7 +532,7 @@ public class Termrechner extends JFrame {
 			erg.setText("");
 			erg.setText(getAusgabe(term, art));
 		}
-
+		repaint();
 	}
 
 	public void berechneTerm(String ein) {
@@ -498,6 +560,7 @@ public class Termrechner extends JFrame {
 				}
 			}
 		}
+		repaint();
 
 	}
 
@@ -551,8 +614,10 @@ public class Termrechner extends JFrame {
 			}
 		}
 		berechneTerm(te.getEingabe());
+		
 		setRechnungen();
 		setVarlist();
+		text.setText(term.getEingabe());
 	}
 
 	public void setRechnungen() {
@@ -571,14 +636,14 @@ public class Termrechner extends JFrame {
 			ausgabe += "Rechnung: \n";
 			ausgabe += term.getEingabe() + "\n";
 
-			ausgabe += "= " + term.getErgebnis().getZahl(art) + "\n\n";
+			ausgabe += "= " + term.getErgebnis().getZahl(art) + "\n";
 
 			
 
 			al = term.getAusgabeliste();
-
-			if (al.length > 0) {
-				ausgabe += "Rechenschritte:\n";
+			
+			if (al.length > 0 && rechenschritte) {
+				ausgabe += "\nRechenschritte:\n";
 
 				for (int vi = 0; vi < al.length && al.length > 0; vi++) {
 					TermA a = al[vi];
@@ -602,7 +667,7 @@ public class Termrechner extends JFrame {
 				}
 
 			}
-			ausgabe += "________________________________________\n\n";
+			ausgabe += "________________________________________\n";
 		}
 
 		return ausgabe;
@@ -683,5 +748,11 @@ public class Termrechner extends JFrame {
 
 		text.setCaretPosition(pos);
 		text.requestFocus();
+	}
+	public Term getTerm() {
+		return term;
+	}
+	public String getArt() {
+		return art;
 	}
 }

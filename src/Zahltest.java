@@ -5,7 +5,7 @@ public class Zahltest {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		String[][] str = new String[][] { 
-		{"3",""},
+		{"3E-4",""},
 		{"6|8",""},
 		{"2_22|10",""},
 		{ "2.5","B"},

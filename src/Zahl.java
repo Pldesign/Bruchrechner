@@ -117,7 +117,7 @@ public class Zahl {
 			if (d2bruch.length > 1) {
 				d3 = Integer.parseInt(d2bruch[1]);
 			}
-			if (d1bruch.length > 1 || d3 > 0) {
+			if (d1bruch.length > 1 || d3 != 0) {
 				if (d1bruch.length > 1) {
 					zaehler = Long.parseLong(d1bruch[0] + d1bruch[1]);
 					nenner = (long) Math.pow(10, d1bruch[1].length());
@@ -231,7 +231,7 @@ public class Zahl {
 			long z = ze.zaehler;
 			long n = ze.nenner;
 			long x;
-			if (z1.zaehler < 0) {
+			if (z2.zaehler < 0) {
 				x = ze.zaehler;
 				ze.zaehler = ze.nenner;
 				ze.nenner = x;
@@ -239,7 +239,7 @@ public class Zahl {
 				z = n;
 				n = x;
 			}
-			if (z1.zaehler == 0) {
+			if (z2.zaehler == 0) {
 				ze.zaehler = 1;
 				ze.nenner = 1;
 			}
