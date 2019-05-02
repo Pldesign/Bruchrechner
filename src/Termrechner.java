@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import javax.swing.JScrollPane;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.DefaultComboBoxModel;
 import java.awt.event.KeyAdapter;
@@ -59,6 +60,9 @@ import javax.swing.border.SoftBevelBorder;
 import javax.swing.border.BevelBorder;
 import javax.swing.ScrollPaneConstants;
 import java.awt.Dimension;
+import javax.swing.JScrollBar;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeEvent;
 
 public class Termrechner extends JFrame {
 
@@ -85,9 +89,10 @@ public class Termrechner extends JFrame {
 	private JPanel panel;
 	private JScrollPane scrollPane_1;
 	public JPanel tastatur;
-	public JPanel baum;
+	public JComponent baum;
 
 	private JSlider nk;
+	private BufferedImage image;
 	private JComboBox<String> ra;
 	private String art;
 	private JPanel panel_3;
@@ -97,6 +102,7 @@ public class Termrechner extends JFrame {
 	private String delkom = "[K]"; // Kommentar in der Eingabe
 	private Term term;
 	private TermA[] al;
+	private String[] rl;
 	public JTextArea text;
 	private int pos = 0;
 	public String erglist = "";
@@ -107,8 +113,8 @@ public class Termrechner extends JFrame {
 	TreeMap<String, Term> rechmap = new TreeMap<String, Term>();
 
 	TreeMap<String, Term> varmap = new TreeMap<String, Term>();
-	private Term lterm = new Term("0",varmap);
-	
+	private Term lterm = new Term("0", varmap);
+
 	private JMenuBar menuBar;
 	private JScrollPane scrollPane_2;
 	private JTextArea var;
@@ -123,6 +129,24 @@ public class Termrechner extends JFrame {
 	private JMenuItem mntmSchriftart;
 	private JMenuItem mntmRechenschritteAusblenden;
 	private JMenuItem mntmRechenbaumSichern;
+	private JMenuItem mntmRechenbaumSichern_1;
+	private JCheckBox chckbxWerte;
+	private JPanel panel_5;
+	private JSlider kx;
+	private JSlider weite;
+	private JPanel panel_6;
+	private JSlider hoehe;
+	private JSplitPane splitPane_2;
+	private JSlider hoehenabstand;
+	private JButton btnBaum;
+	private JSlider radius;
+	private JLabel lblNewLabel;
+	private JLabel lblBoxabstand;
+	private JLabel lblBoxhhe;
+	private JLabel lblHhenabstand;
+	private JLabel lblRadius;
+	private Font font = new Font("Tahoma", Font.PLAIN, 14);
+	private JButton btnBaum_1;
 
 	/**
 	 * Launch the application.
@@ -147,13 +171,15 @@ public class Termrechner extends JFrame {
 		setTitle("Bruchrechner");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 1000, 600);
-		UIManager.put("Button.font", new FontUIResource("Tahoma", Font.BOLD, 15));
+	
+		
+		
 		art = "B";
 		menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
 
-		FileFilter filter = new FileNameExtensionFilter("Text", "txt");
-		fc.setFileFilter(filter);
+		FileFilter filter1 = new FileNameExtensionFilter("Text", "txt");
+		FileFilter filter2 = new FileNameExtensionFilter("Bild", "png");
 
 		mnFile = new JMenu("Datei");
 		menuBar.add(mnFile);
@@ -161,6 +187,7 @@ public class Termrechner extends JFrame {
 		mntmVerlaufLesen = new JMenuItem("Verlauf lesen");
 		mntmVerlaufLesen.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
+				fc.setFileFilter(filter1);
 				fc.setSelectedFile(new File("verlauf.txt"));
 				int returnVal = fc.showOpenDialog(null);
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
@@ -188,6 +215,7 @@ public class Termrechner extends JFrame {
 		mntmVerlaufSichern = new JMenuItem("Verlauf sichern");
 		mntmVerlaufSichern.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				fc.setFileFilter(filter1);
 				fc.setSelectedFile(new File("verlauf.txt"));
 				int returnVal = fc.showSaveDialog(null);
 
@@ -208,6 +236,8 @@ public class Termrechner extends JFrame {
 		mntmRechnungenLesen.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
+				fc.setFileFilter(filter1);
+
 				fc.setSelectedFile(new File("Rechnungen.txt"));
 				int returnVal = fc.showOpenDialog(null);
 
@@ -236,6 +266,7 @@ public class Termrechner extends JFrame {
 		mntmRechnungenSichern = new JMenuItem("Rechnungen sichern");
 		mntmRechnungenSichern.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				fc.setFileFilter(filter1);
 
 				fc.setSelectedFile(new File("rechnungen.txt"));
 				int returnVal = fc.showSaveDialog(null);
@@ -255,8 +286,30 @@ public class Termrechner extends JFrame {
 			}
 		});
 		mnFile.add(mntmRechnungenSichern);
-		
-	
+
+		mntmRechenbaumSichern_1 = new JMenuItem("Rechenbaum sichern");
+		mntmRechenbaumSichern_1.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				fc.setFileFilter(filter2);
+				fc.setSelectedFile(new File("rechenbaum.png"));
+				int returnVal = fc.showSaveDialog(null);
+
+				if (returnVal == JFileChooser.APPROVE_OPTION) {
+					try {
+						ImageIO.write(image, "PNG", new FileOutputStream(fc.getSelectedFile()));
+
+					} catch (IOException e2) {
+						// TODO Auto-generated catch block
+						e2.printStackTrace();
+					}
+				}
+				FileFilter filter = new FileNameExtensionFilter("Text", "txt");
+				fc.setFileFilter(filter);
+
+			}
+		});
+		mnFile.add(mntmRechenbaumSichern_1);
+
 		mnOptions = new JMenu("Optionen");
 		menuBar.add(mnOptions);
 
@@ -306,7 +359,7 @@ public class Termrechner extends JFrame {
 			}
 		});
 		mnOptions.add(menuErgebnisliste);
-		
+
 		mntmRechenschritteAusblenden = new JMenuItem("Rechenschritte ausblenden");
 		mntmRechenschritteAusblenden.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -322,17 +375,15 @@ public class Termrechner extends JFrame {
 		});
 		mnOptions.add(mntmRechenschritteAusblenden);
 		mnOptions.add(menuTastatur);
-		
+
 		mntmSchriftart = new JMenuItem("Schriftart");
 		mntmSchriftart.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				JFontChooser font = new JFontChooser();
-				font.setSelectedFont(new Font("Tahoma", Font.PLAIN, 15));
-				font.showDialog(erg);
-				erg.setFont(font.getSelectedFont());
-				text.setFont(font.getSelectedFont());
-				var.setFont(font.getSelectedFont());
-				baum.setFont(font.getSelectedFont());
+				JFontChooser fontchooser = new JFontChooser();
+				fontchooser.setSelectedFont(font);
+				fontchooser.showDialog(erg);
+				font = fontchooser.getSelectedFont();
+				setFont();
 				repaint();
 			}
 		});
@@ -349,7 +400,6 @@ public class Termrechner extends JFrame {
 
 		contentPane.add(scrollPane_1, BorderLayout.NORTH);
 		text = new JTextArea();
-		text.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		text.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
@@ -396,6 +446,11 @@ public class Termrechner extends JFrame {
 			}
 		});
 		panel_3.add(btnNewButton);
+		
+		btnBaum_1 = new JButton("Baum");
+		panel_3.add(btnBaum_1);
+
+		
 
 		chckbxVariablenbernehmen = new JCheckBox("Variablen \u00FCberschreiben");
 		chckbxVariablenbernehmen.setSelected(true);
@@ -417,34 +472,22 @@ public class Termrechner extends JFrame {
 		panel_2 = new JPanel();
 		splitPane_1.setRightComponent(panel_2);
 		panel_2.setLayout(new BoxLayout(panel_2, BoxLayout.X_AXIS));
-		
+
 		splitPane = new JSplitPane();
 		splitPane.setResizeWeight(0.3);
 		splitPane.setOneTouchExpandable(true);
 		splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
 		panel_2.add(splitPane);
-		
-				scrollPane = new JScrollPane();
-				scrollPane.setPreferredSize(new Dimension(2, 200));
-				splitPane.setLeftComponent(scrollPane);
-				scrollPane.setViewportBorder(
-						new TitledBorder(null, "Ausgabe", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-				erg = new JTextArea();
-				erg.setFont(new Font("Tahoma", Font.PLAIN, 14));
-				erg.setEditable(false);
-				scrollPane.setViewportView(erg);
-				erg.setText("");
-				
-				scrollPane_3 = new JScrollPane();
-				scrollPane_3.setViewportBorder(new TitledBorder(null, "Rechenbaum", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-				
-				splitPane.setRightComponent(scrollPane_3);
-				
-				
-				baum = new Baum (this);
-				
-				scrollPane_3.setViewportView(baum);
-				
+
+		scrollPane = new JScrollPane();
+		scrollPane.setPreferredSize(new Dimension(2, 200));
+		splitPane.setLeftComponent(scrollPane);
+		scrollPane.setViewportBorder(
+				new TitledBorder(null, "Ausgabe", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		erg = new JTextArea();
+		erg.setEditable(false);
+		scrollPane.setViewportView(erg);
+		erg.setText("");
 
 		panel_4 = new JPanel();
 		splitPane_1.setLeftComponent(panel_4);
@@ -502,6 +545,121 @@ public class Termrechner extends JFrame {
 		nk.setPaintLabels(true);
 		nk.setMaximum(10);
 
+		splitPane_2 = new JSplitPane();
+		splitPane_2.setOneTouchExpandable(true);
+		splitPane.setRightComponent(splitPane_2);
+
+		scrollPane_3 = new JScrollPane();
+		splitPane_2.setRightComponent(scrollPane_3);
+		scrollPane_3.setViewportBorder(
+				new TitledBorder(null, "Rechenbaum", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+
+		baum = new Baum(this);
+
+		scrollPane_3.setViewportView(baum);
+
+		panel_5 = new JPanel();
+		scrollPane_3.setColumnHeaderView(panel_5);
+		panel_5.setLayout(new GridLayout(0, 3, 0, 0));
+
+		panel_6 = new JPanel();
+		splitPane_2.setLeftComponent(panel_6);
+		panel_6.setBorder(
+				new TitledBorder(null, "Baumeinstellungen", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panel_6.setLayout(new GridLayout(11, 0, 0, 0));
+
+		weite = new JSlider();
+		weite.setToolTipText("zus\u00E4tzliche Boxweite");
+		weite.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
+		weite.addPropertyChangeListener(new PropertyChangeListener() {
+			public void propertyChange(PropertyChangeEvent arg0) {
+				repaint();
+			}
+		});
+		
+		lblNewLabel = new JLabel("Boxweite");
+		lblNewLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		panel_6.add(lblNewLabel);
+		weite.setValue(10);
+
+		panel_6.add(weite);
+		
+		lblBoxabstand = new JLabel("Boxabstand");
+		lblBoxabstand.setHorizontalAlignment(SwingConstants.CENTER);
+		panel_6.add(lblBoxabstand);
+
+		kx = new JSlider();
+		kx.setToolTipText("Abstand der Boxen");
+		kx.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
+
+		panel_6.add(kx);
+		kx.setValue(10);
+		kx.addPropertyChangeListener(new PropertyChangeListener() {
+			public void propertyChange(PropertyChangeEvent arg0) {
+
+				repaint();
+			}
+		});
+
+		hoehe = new JSlider();
+		hoehe.setToolTipText("zus\u00E4tzliche Boxh\u00F6he");
+		hoehe.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
+		hoehe.addPropertyChangeListener(new PropertyChangeListener() {
+			public void propertyChange(PropertyChangeEvent evt) {
+				repaint();
+			}
+		});
+		
+		lblBoxhhe = new JLabel("Boxh\u00F6he");
+		lblBoxhhe.setHorizontalAlignment(SwingConstants.CENTER);
+		panel_6.add(lblBoxhhe);
+		hoehe.setValue(10);
+
+		panel_6.add(hoehe);
+		
+		lblHhenabstand = new JLabel("H\u00F6henabstand");
+		lblHhenabstand.setHorizontalAlignment(SwingConstants.CENTER);
+		panel_6.add(lblHhenabstand);
+
+		hoehenabstand = new JSlider();
+		hoehenabstand.addPropertyChangeListener(new PropertyChangeListener() {
+			public void propertyChange(PropertyChangeEvent arg0) {
+				repaint();
+			}
+		});
+		hoehenabstand.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
+		hoehenabstand.setToolTipText("H\u00F6henabstand");
+		hoehenabstand.setValue(10);
+		panel_6.add(hoehenabstand);
+		
+		lblRadius = new JLabel("Radius");
+		lblRadius.setHorizontalAlignment(SwingConstants.CENTER);
+		panel_6.add(lblRadius);
+		
+		radius = new JSlider();
+		radius.addPropertyChangeListener(new PropertyChangeListener() {
+			public void propertyChange(PropertyChangeEvent arg0) {
+				repaint();
+			}
+		});
+		radius.setMaximum(50);
+		radius.setToolTipText("zus\u00E4tzlicher Radius");
+		radius.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
+		radius.setValue(5);
+		radius.setPaintLabels(true);
+		radius.setEnabled(true);
+		panel_6.add(radius);
+		
+				chckbxWerte = new JCheckBox("Werte");
+				chckbxWerte.setHorizontalAlignment(SwingConstants.CENTER);
+				panel_6.add(chckbxWerte);
+				chckbxWerte.addChangeListener(new ChangeListener() {
+					public void stateChanged(ChangeEvent e) {
+						repaint();
+					}
+				});
+				chckbxWerte.setSelected(true);
+
 		alleRechnungen();
 		erglist = "";
 		varmap.clear();
@@ -509,8 +667,10 @@ public class Termrechner extends JFrame {
 		erg.setText("");
 		verlauf.removeAllItems();
 		term = null;
-
+		setFont();
 	}
+
+	
 
 	private void rund() {
 		int ind = ra.getSelectedIndex();
@@ -601,25 +761,39 @@ public class Termrechner extends JFrame {
 	}
 
 	public void berechneRechnung() {
-		Term te = rechmap.get(rechnungen.getSelectedItem());
-		if (te == null) {
-			te = new Term((String) rechnungen.getSelectedItem(), null);
-		}
-		if (chckbxVariablenbernehmen.isSelected()) {
-			TreeMap<String, Term> va = new TreeMap<String, Term>();
-			va = te.getVarmap();
-			for (Map.Entry e : va.entrySet()) {
-				Term ter = (Term) e.getValue();
-				varmap.put((String) e.getKey(), ter);
+		if (rechnungen.getSelectedItem() != null) {
+			Term te = rechmap.get(rechnungen.getSelectedItem());
+
+			if (te == null) {
+				te = new Term((String) rechnungen.getSelectedItem(), null);
+			}
+			if (te != null) {
+				if (chckbxVariablenbernehmen.isSelected()) {
+					TreeMap<String, Term> va = new TreeMap<String, Term>();
+					va = te.getVarmap();
+					for (Map.Entry e : va.entrySet()) {
+						Term ter = (Term) e.getValue();
+						varmap.put((String) e.getKey(), ter);
+					}
+				}
+				berechneTerm(te.getEingabe());
+				setRechnungen();
+				setVarlist();
+				text.setText(term.getEingabe());
 			}
 		}
-		berechneTerm(te.getEingabe());
-		
-		setRechnungen();
-		setVarlist();
-		text.setText(term.getEingabe());
+
 	}
 
+	public void setFont() {
+		this.setFont(font);
+		erg.setFont(font);
+		text.setFont(font);
+		var.setFont(font);
+		baum.setFont(font);
+		
+	}
+	
 	public void setRechnungen() {
 		rechnungen.removeAllItems();
 		for (Map.Entry e : rechmap.entrySet()) {
@@ -638,10 +812,8 @@ public class Termrechner extends JFrame {
 
 			ausgabe += "= " + term.getErgebnis().getZahl(art) + "\n";
 
-			
-
 			al = term.getAusgabeliste();
-			
+
 			if (al.length > 0 && rechenschritte) {
 				ausgabe += "\nRechenschritte:\n";
 
@@ -724,7 +896,6 @@ public class Termrechner extends JFrame {
 			break;
 		case "ANS": // kein break, es soll "A angehängt werden.
 			str = "A";
-			
 
 		default:
 			if (str.matches("\\>[a-z]")) {
@@ -749,10 +920,39 @@ public class Termrechner extends JFrame {
 		text.setCaretPosition(pos);
 		text.requestFocus();
 	}
+
 	public Term getTerm() {
 		return term;
 	}
+
 	public String getArt() {
 		return art;
+	}
+
+	public void setBaumbild(BufferedImage image) {
+		this.image = image;
+	}
+
+	public int getKx() {
+		return kx.getValue() * 2 + 20;
+	}
+
+	public int getWeite() {
+		return weite.getValue();
+	}
+
+	public int getHoehe() {
+		return hoehe.getValue();
+	}
+
+	public int getHoehenabstand() {
+		return hoehenabstand.getValue();
+	}
+	public int getRadius() {
+		return radius.getValue();
+	}
+
+	public boolean getWerte() {
+		return chckbxWerte.isSelected();
 	}
 }
